@@ -45,12 +45,19 @@ create table if not exists public.quotations (
 
 alter table public.companies enable row level security; alter table public.ai_employees enable row level security; alter table public.contacts enable row level security; alter table public.leads enable row level security; alter table public.knowledge_items enable row level security; alter table public.bookings enable row level security; alter table public.quotations enable row level security;
 
+drop policy if exists "owners manage companies" on public.companies;
 create policy "owners manage companies" on public.companies for all using (owner_id=auth.uid()) with check (owner_id=auth.uid());
+drop policy if exists "owners manage employees" on public.ai_employees;
 create policy "owners manage employees" on public.ai_employees for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+drop policy if exists "owners manage contacts" on public.contacts;
 create policy "owners manage contacts" on public.contacts for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+drop policy if exists "owners manage leads" on public.leads;
 create policy "owners manage leads" on public.leads for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+drop policy if exists "owners manage knowledge" on public.knowledge_items;
 create policy "owners manage knowledge" on public.knowledge_items for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+drop policy if exists "owners manage bookings" on public.bookings;
 create policy "owners manage bookings" on public.bookings for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+drop policy if exists "owners manage quotations" on public.quotations;
 create policy "owners manage quotations" on public.quotations for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
 
 create table if not exists public.conversations (
@@ -72,5 +79,7 @@ create table if not exists public.messages (
 );
 alter table public.conversations enable row level security;
 alter table public.messages enable row level security;
+drop policy if exists "owners manage conversations" on public.conversations;
 create policy "owners manage conversations" on public.conversations for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+drop policy if exists "owners manage messages" on public.messages;
 create policy "owners manage messages" on public.messages for all using (conversation_id in (select c.id from public.conversations c join public.companies co on co.id=c.company_id where co.owner_id=auth.uid())) with check (conversation_id in (select c.id from public.conversations c join public.companies co on co.id=c.company_id where co.owner_id=auth.uid()));
