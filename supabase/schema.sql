@@ -83,3 +83,20 @@ drop policy if exists "owners manage conversations" on public.conversations;
 create policy "owners manage conversations" on public.conversations for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
 drop policy if exists "owners manage messages" on public.messages;
 create policy "owners manage messages" on public.messages for all using (conversation_id in (select c.id from public.conversations c join public.companies co on co.id=c.company_id where co.owner_id=auth.uid())) with check (conversation_id in (select c.id from public.conversations c join public.companies co on co.id=c.company_id where co.owner_id=auth.uid()));
+
+
+create table if not exists public.channel_connections (
+ id uuid primary key default uuid_generate_v4(),
+ company_id uuid not null references public.companies(id) on delete cascade,
+ channel text not null,
+ external_account_id text,
+ phone_number_id text,
+ display_name text,
+ status text default 'disconnected',
+ created_at timestamptz default now()
+);
+alter table public.channel_connections enable row level security;
+drop policy if exists "owners manage channels" on public.channel_connections;
+create policy "owners manage channels" on public.channel_connections for all
+using (company_id in (select id from public.companies where owner_id=auth.uid()))
+with check (company_id in (select id from public.companies where owner_id=auth.uid()));
