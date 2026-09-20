@@ -105,3 +105,21 @@ with check (company_id in (select id from public.companies where owner_id=auth.u
 alter table public.leads add column if not exists conversation_id uuid references public.conversations(id) on delete set null;
 alter table public.leads add column if not exists qualification jsonb default '{}'::jsonb;
 alter table public.leads add column if not exists updated_at timestamptz default now();
+
+
+create table if not exists public.follow_ups (
+ id uuid primary key default uuid_generate_v4(),
+ company_id uuid not null references public.companies(id) on delete cascade,
+ lead_id uuid not null references public.leads(id) on delete cascade,
+ conversation_id uuid references public.conversations(id) on delete cascade,
+ scheduled_at timestamptz not null,
+ status text default 'pending' check (status in ('pending','sent','cancelled','failed')),
+ message text,
+ sent_at timestamptz,
+ created_at timestamptz default now()
+);
+alter table public.follow_ups enable row level security;
+drop policy if exists "owners manage follow ups" on public.follow_ups;
+create policy "owners manage follow ups" on public.follow_ups for all
+using (company_id in (select id from public.companies where owner_id=auth.uid()))
+with check (company_id in (select id from public.companies where owner_id=auth.uid()));
