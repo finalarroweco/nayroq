@@ -52,3 +52,25 @@ create policy "owners manage leads" on public.leads for all using (company_id in
 create policy "owners manage knowledge" on public.knowledge_items for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
 create policy "owners manage bookings" on public.bookings for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
 create policy "owners manage quotations" on public.quotations for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+
+create table if not exists public.conversations (
+ id uuid primary key default uuid_generate_v4(),
+ company_id uuid not null references public.companies(id) on delete cascade,
+ ai_employee_id uuid references public.ai_employees(id) on delete set null,
+ contact_id uuid references public.contacts(id) on delete set null,
+ channel text default 'test',
+ status text default 'open',
+ human_takeover boolean default false,
+ created_at timestamptz default now()
+);
+create table if not exists public.messages (
+ id uuid primary key default uuid_generate_v4(),
+ conversation_id uuid not null references public.conversations(id) on delete cascade,
+ sender text not null check (sender in ('customer','ai','human','system')),
+ content text not null,
+ created_at timestamptz default now()
+);
+alter table public.conversations enable row level security;
+alter table public.messages enable row level security;
+create policy "owners manage conversations" on public.conversations for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+create policy "owners manage messages" on public.messages for all using (conversation_id in (select c.id from public.conversations c join public.companies co on co.id=c.company_id where co.owner_id=auth.uid())) with check (conversation_id in (select c.id from public.conversations c join public.companies co on co.id=c.company_id where co.owner_id=auth.uid()));
