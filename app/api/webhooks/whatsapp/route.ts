@@ -9,4 +9,18 @@ if(salesSignals.some(x=>lower.includes(x))){
  const{data:existingLead}=await admin.from("leads").select("id").eq("company_id",conn.company_id).eq("conversation_id",conv.id).maybeSingle();
  if(!existingLead){const{error:leadError}=await admin.from("leads").insert({company_id:conn.company_id,contact_id:contact?.id,ai_employee_id:emp.id,conversation_id:conv.id,stage:"new",notes:"Automatically qualified from WhatsApp conversation.",qualification:{source:"whatsapp",trigger_message:text}});if(leadError){console.error("Auto lead insert failed",leadError);await admin.from("messages").insert({conversation_id:conv.id,sender:"system",content:"Auto lead creation failed: "+leadError.message})}else{await admin.from("messages").insert({conversation_id:conv.id,sender:"system",content:"Lead created automatically from purchase intent."})}}
 }
-await admin.from("messages").insert({conversation_id:conv.id,sender:"ai",content:answer});const token=process.env.WHATSAPP_ACCESS_TOKEN;if(token)await fetch(`https://graph.facebook.com/v26.0/${phoneId}/messages`,{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({messaging_product:"whatsapp",to:incoming.from,type:"text",text:{body:answer}})});return NextResponse.json({ok:true})}catch(e){console.error("WhatsApp webhook",e);return NextResponse.json({ok:true})}}
+await admin.from("messages").insert({conversation_id:conv.id,sender:"ai",content:answer});
+const{data:lead}=await admin.from("leads").select("*").eq("company_id",conn.company_id).eq("conversation_id",conv.id).maybeSingle();
+if(lead){
+ const transcript=((history||[]).reverse().map((m:any)=>m.sender+": "+m.content).join("\n")+"\nai: "+answer).slice(-10000);
+ try{
+  const qr=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+process.env.OPENAI_API_KEY},body:JSON.stringify({model:process.env.OPENAI_MODEL||"gpt-5.6-luna",instructions:"Extract sales qualification facts from the conversation. Return ONLY valid JSON with keys: customer_name, company_name, service, budget, start_timeline, qualified. Values must be strings or null, and qualified must be boolean. Never guess. qualified=true only when the requested service is clear and at least one of budget or start_timeline is known.",input:transcript,reasoning:{effort:"none"}})});
+  const qd=await qr.json();let raw=qd.output_text||"";
+  if(!raw&&Array.isArray(qd.output))for(const item of qd.output)if(Array.isArray(item.content))for(const part of item.content)if(part.type==="output_text"&&part.text)raw+=part.text;
+  raw=raw.replace(/^```json\s*/,"").replace(/\s*```$/,"");
+  const parsed=JSON.parse(raw);const prev=lead.qualification||{};const merged={...prev,...Object.fromEntries(Object.entries(parsed).filter(([k,v])=>k!=="qualified"&&v!==null&&v!==""))};
+  await admin.from("leads").update({qualification:merged,stage:parsed.qualified?"qualified":lead.stage,updated_at:new Date().toISOString()}).eq("id",lead.id);
+  if(parsed.customer_name&&!contact?.name)await admin.from("contacts").update({name:parsed.customer_name}).eq("id",contact.id);
+ }catch(qe){console.error("Qualification extraction failed",qe)}
+}
+const token=process.env.WHATSAPP_ACCESS_TOKEN;if(token)await fetch(`https://graph.facebook.com/v26.0/${phoneId}/messages`,{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({messaging_product:"whatsapp",to:incoming.from,type:"text",text:{body:answer}})});return NextResponse.json({ok:true})}catch(e){console.error("WhatsApp webhook",e);return NextResponse.json({ok:true})}}
