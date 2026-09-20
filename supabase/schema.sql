@@ -123,3 +123,23 @@ drop policy if exists "owners manage follow ups" on public.follow_ups;
 create policy "owners manage follow ups" on public.follow_ups for all
 using (company_id in (select id from public.companies where owner_id=auth.uid()))
 with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+
+
+alter table public.companies add column if not exists plan text default 'trial';
+alter table public.companies add column if not exists subscription_status text default 'trialing';
+alter table public.companies add column if not exists trial_ends_at timestamptz default (now() + interval '14 days');
+alter table public.companies add column if not exists billing_cycle text default 'monthly';
+
+create table if not exists public.usage_monthly (
+ id uuid primary key default uuid_generate_v4(),
+ company_id uuid not null references public.companies(id) on delete cascade,
+ period text not null,
+ conversations integer default 0,
+ ai_messages integer default 0,
+ created_at timestamptz default now(),
+ unique(company_id,period)
+);
+alter table public.usage_monthly enable row level security;
+drop policy if exists "owners view usage" on public.usage_monthly;
+create policy "owners view usage" on public.usage_monthly for select
+using (company_id in (select id from public.companies where owner_id=auth.uid()));
