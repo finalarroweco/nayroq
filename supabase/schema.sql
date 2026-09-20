@@ -1,0 +1,54 @@
+create extension if not exists "uuid-ossp";
+
+create table if not exists public.companies (
+ id uuid primary key default uuid_generate_v4(),
+ owner_id uuid not null references auth.users(id) on delete cascade,
+ name text not null,
+ industry text,
+ country text,
+ currency text default 'OMR',
+ created_at timestamptz default now()
+);
+create table if not exists public.ai_employees (
+ id uuid primary key default uuid_generate_v4(),
+ company_id uuid not null references public.companies(id) on delete cascade,
+ name text not null,
+ role text not null check (role in ('sales','receptionist','support','booking','follow_up','collections')),
+ language text default 'both',
+ tone text default 'professional',
+ goal text,
+ status text default 'draft' check (status in ('draft','active','paused')),
+ instructions text,
+ created_at timestamptz default now()
+);
+create table if not exists public.contacts (
+ id uuid primary key default uuid_generate_v4(), company_id uuid not null references public.companies(id) on delete cascade,
+ name text, phone text, email text, source text, created_at timestamptz default now()
+);
+create table if not exists public.leads (
+ id uuid primary key default uuid_generate_v4(), company_id uuid not null references public.companies(id) on delete cascade,
+ contact_id uuid references public.contacts(id) on delete set null, ai_employee_id uuid references public.ai_employees(id) on delete set null,
+ stage text default 'new', value numeric default 0, currency text default 'OMR', notes text, created_at timestamptz default now()
+);
+create table if not exists public.knowledge_items (
+ id uuid primary key default uuid_generate_v4(), company_id uuid not null references public.companies(id) on delete cascade,
+ title text not null, content text, source_type text default 'manual', source_url text, created_at timestamptz default now()
+);
+create table if not exists public.bookings (
+ id uuid primary key default uuid_generate_v4(), company_id uuid not null references public.companies(id) on delete cascade,
+ contact_id uuid references public.contacts(id) on delete set null, starts_at timestamptz not null, status text default 'confirmed', notes text, created_at timestamptz default now()
+);
+create table if not exists public.quotations (
+ id uuid primary key default uuid_generate_v4(), company_id uuid not null references public.companies(id) on delete cascade,
+ contact_id uuid references public.contacts(id) on delete set null, amount numeric default 0, currency text default 'OMR', status text default 'draft', created_at timestamptz default now()
+);
+
+alter table public.companies enable row level security; alter table public.ai_employees enable row level security; alter table public.contacts enable row level security; alter table public.leads enable row level security; alter table public.knowledge_items enable row level security; alter table public.bookings enable row level security; alter table public.quotations enable row level security;
+
+create policy "owners manage companies" on public.companies for all using (owner_id=auth.uid()) with check (owner_id=auth.uid());
+create policy "owners manage employees" on public.ai_employees for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+create policy "owners manage contacts" on public.contacts for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+create policy "owners manage leads" on public.leads for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+create policy "owners manage knowledge" on public.knowledge_items for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+create policy "owners manage bookings" on public.bookings for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+create policy "owners manage quotations" on public.quotations for all using (company_id in (select id from public.companies where owner_id=auth.uid())) with check (company_id in (select id from public.companies where owner_id=auth.uid()));
