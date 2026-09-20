@@ -100,3 +100,8 @@ drop policy if exists "owners manage channels" on public.channel_connections;
 create policy "owners manage channels" on public.channel_connections for all
 using (company_id in (select id from public.companies where owner_id=auth.uid()))
 with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+
+
+alter table public.leads add column if not exists conversation_id uuid references public.conversations(id) on delete set null;
+alter table public.leads add column if not exists qualification jsonb default '{}'::jsonb;
+alter table public.leads add column if not exists updated_at timestamptz default now();
