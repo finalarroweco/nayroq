@@ -146,3 +146,20 @@ using (company_id in (select id from public.companies where owner_id=auth.uid())
 
 
 alter table public.companies add column if not exists widget_key uuid default uuid_generate_v4();
+
+
+create table if not exists public.notifications (
+ id uuid primary key default uuid_generate_v4(),
+ company_id uuid not null references public.companies(id) on delete cascade,
+ type text not null,
+ title text not null,
+ body text,
+ link text,
+ read boolean default false,
+ created_at timestamptz default now()
+);
+alter table public.notifications enable row level security;
+drop policy if exists "owners manage notifications" on public.notifications;
+create policy "owners manage notifications" on public.notifications for all
+using (company_id in (select id from public.companies where owner_id=auth.uid()))
+with check (company_id in (select id from public.companies where owner_id=auth.uid()));
