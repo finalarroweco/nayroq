@@ -1,0 +1,1 @@
+import Link from"next/link";export default function NotFound(){return <main className="errorpage"><div className="logo"><i>N</i><b>NAYROQ</b></div><strong>404</strong><h1>This page isn’t part of your workforce.</h1><p>The page may have moved or the link may be incorrect.</p><Link className="button" href="/dashboard">Back to Dashboard →</Link></main>}
