@@ -1,0 +1,1 @@
+"use client";export default function ErrorPage({reset}:{reset:()=>void}){return <main className="errorpage"><div className="logo"><i>N</i><b>NAYROQ</b></div><strong>!</strong><h1>Something went wrong.</h1><p>Your data is safe. Try loading this section again.</p><button onClick={()=>reset()}>Try again</button></main>}
