@@ -127,7 +127,7 @@ with check (company_id in (select id from public.companies where owner_id=auth.u
 
 alter table public.companies add column if not exists plan text default 'trial';
 alter table public.companies add column if not exists subscription_status text default 'trialing';
-alter table public.companies add column if not exists trial_ends_at timestamptz default (now() + interval '14 days');
+alter table public.companies add column if not exists trial_ends_at timestamptz default (now() + interval '3 days');
 alter table public.companies add column if not exists billing_cycle text default 'monthly';
 
 create table if not exists public.usage_monthly (
