@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useState} from "react";
-import Link from "next/link";
+import Link from "next/link";import{LanguageSwitch}from"@/app/i18n";
 import {createClient} from "@/lib/supabase/client";
 
 export default function Manager(){
@@ -26,7 +26,7 @@ export default function Manager(){
   if(!data)return <main className="loading">Preparing your AI Manager brief…</main>;
   const funnel=[["Conversations",data.conversations],["Leads",data.leads],["Qualified",data.qualified],["Quotations",data.quotes],["Won",data.wins]];
   return <main className="module">
-    <header><Link href="/dashboard">← Dashboard</Link><div className="logo"><i>N</i><b>NAYROQ</b></div><span>AI Manager</span></header>
+    <header><Link href="/dashboard">← Dashboard</Link><div className="logo"><i>N</i><b>NAYROQ</b></div><span>AI Manager</span><LanguageSwitch/></header>
     <section>
       <div className="eyebrow">EXECUTIVE OVERVIEW</div>
       <h1>Good morning. Here’s what your AI team is doing.</h1>
