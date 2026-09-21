@@ -23,3 +23,6 @@ npm run dev
 ```
 
 Built as a Next.js + TypeScript application. Supabase and channel integrations will be connected in the backend phase.
+
+
+<!-- production redeploy trigger -->
