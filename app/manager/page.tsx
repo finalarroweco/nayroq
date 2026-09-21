@@ -1,9 +1,9 @@
 "use client";
 import {useEffect,useState} from "react";
-import Link from "next/link";import{LanguageSwitch}from"@/app/i18n";
+import Link from "next/link";import{LanguageSwitch,useLanguage}from"@/app/i18n";
 import {createClient} from "@/lib/supabase/client";
 
-export default function Manager(){
+export default function Manager(){const{lang,t}=useLanguage();
   const [data,setData]=useState<any>(null);
   useEffect(()=>{void load()},[]);
   async function load(){
