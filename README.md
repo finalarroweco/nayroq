@@ -2,27 +2,26 @@
 
 **Your AI Workforce.**
 
-NAYROQ is a Gulf-first AI workforce SaaS. Businesses hire AI employees for sales, support, bookings, follow-ups and collections across WhatsApp, Instagram, Facebook and website chat.
+Gulf-first AI workforce SaaS for Arabic and English customer operations.
 
-## V1
-- AI Employees
+## Release Candidate
+- Arabic + English interface with RTL
+- 3-day free trial and plan limits
+- AI Employees + Knowledge Base
+- WhatsApp AI + human takeover
+- Website Chat AI + live human takeover
 - Unified Inbox
-- Leads & Customers CRM
-- Bookings
-- Quotations
-- Follow-ups
-- Knowledge Base
-- Analytics
-- Integrations
-- Billing
+- Leads, qualification, customers, bookings and quotations
+- Automated hourly follow-ups
+- Analytics + AI Manager
+- Notifications + onboarding checklist
+- Privacy and data deletion pages
+- Instagram/Meta integration foundation (production access pending Meta approval)
+- Stripe billing intentionally pending final integration
 
-## Local development
-```bash
-npm install
-npm run dev
-```
+## Required production environment
+See `.env.example`.
 
-Built as a Next.js + TypeScript application. Supabase and channel integrations will be connected in the backend phase.
-
-
-<!-- production redeploy trigger -->
+## Remaining external launch dependencies
+1. Stripe subscriptions and webhooks
+2. Meta production approval / Facebook & Instagram messaging activation
