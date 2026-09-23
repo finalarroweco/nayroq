@@ -163,3 +163,30 @@ drop policy if exists "owners manage notifications" on public.notifications;
 create policy "owners manage notifications" on public.notifications for all
 using (company_id in (select id from public.companies where owner_id=auth.uid()))
 with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+
+
+create table if not exists public.payment_submissions (
+ id uuid primary key default uuid_generate_v4(),
+ company_id uuid not null references public.companies(id) on delete cascade,
+ plan text not null check (plan in ('starter','business','growth')),
+ amount numeric not null,
+ currency text default 'OMR',
+ reference text not null unique,
+ receipt_url text,
+ status text default 'pending' check (status in ('pending','approved','rejected')),
+ submitted_at timestamptz default now(),
+ reviewed_at timestamptz
+);
+alter table public.payment_submissions enable row level security;
+drop policy if exists "owners manage own payments" on public.payment_submissions;
+create policy "owners manage own payments" on public.payment_submissions for all
+using (company_id in (select id from public.companies where owner_id=auth.uid()))
+with check (company_id in (select id from public.companies where owner_id=auth.uid()));
+
+insert into storage.buckets (id,name,public) values ('payment-receipts','payment-receipts',false) on conflict (id) do nothing;
+drop policy if exists "users upload payment receipts" on storage.objects;
+create policy "users upload payment receipts" on storage.objects for insert to authenticated
+with check (bucket_id='payment-receipts');
+drop policy if exists "users read payment receipts" on storage.objects;
+create policy "users read payment receipts" on storage.objects for select to authenticated
+using (bucket_id='payment-receipts');
