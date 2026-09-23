@@ -192,3 +192,13 @@ create policy "users read payment receipts" on storage.objects for select to aut
 using (bucket_id='payment-receipts');
 
 alter table public.companies add column if not exists subscription_ends_at timestamptz;
+
+
+create table if not exists public.platform_admins (
+ user_id uuid primary key references auth.users(id) on delete cascade,
+ created_at timestamptz default now()
+);
+alter table public.platform_admins enable row level security;
+drop policy if exists "admins read own admin role" on public.platform_admins;
+create policy "admins read own admin role" on public.platform_admins for select
+using (user_id=auth.uid());
