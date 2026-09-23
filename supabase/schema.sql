@@ -190,3 +190,5 @@ with check (bucket_id='payment-receipts');
 drop policy if exists "users read payment receipts" on storage.objects;
 create policy "users read payment receipts" on storage.objects for select to authenticated
 using (bucket_id='payment-receipts');
+
+alter table public.companies add column if not exists subscription_ends_at timestamptz;
