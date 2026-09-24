@@ -39,5 +39,5 @@ export default function Manager(){const{lang,t}=useLanguage();
         <div className="panel"><h3>{t("aiTeam")}</h3>{data.team.map((x:any)=><div className="attention" key={x.id}><div><b>{x.name}</b><small>{String(x.role).replace("_"," ")}</small></div><em className="online">● {x.status}</em></div>)}</div>
       </div>
     </section>
-  </main>
+  </main></div></main>
 }
