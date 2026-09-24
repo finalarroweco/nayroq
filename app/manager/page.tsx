@@ -1,4 +1,4 @@
-"use client";
+"use client";import AppNav from"@/app/components/AppNav";
 import {useEffect,useState} from "react";
 import Link from "next/link";import{LanguageSwitch,useLanguage}from"@/app/i18n";
 import {createClient} from "@/lib/supabase/client";
@@ -25,7 +25,7 @@ export default function Manager(){const{lang,t}=useLanguage();
   }
   if(!data)return <main className="loading">Preparing your AI Manager brief…</main>;
   const funnel=[[t("conversations"),data.conversations],[t("leads"),data.leads],[t("qualified"),data.qualified],[t("quotations"),data.quotes],[t("won"),data.wins]];
-  return <main className="module">
+  return <main className="appshell"><AppNav/><div className="appbody"><main className="module">
     <header><Link href="/dashboard">← Dashboard</Link><div className="logo"><i>N</i><b>NAYROQ</b></div><span>AI Manager</span><LanguageSwitch/></header>
     <section>
       <div className="eyebrow">{t("executive").toUpperCase()}</div>
