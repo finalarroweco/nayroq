@@ -202,3 +202,8 @@ alter table public.platform_admins enable row level security;
 drop policy if exists "admins read own admin role" on public.platform_admins;
 create policy "admins read own admin role" on public.platform_admins for select
 using (user_id=auth.uid());
+
+
+-- AI employee voice response settings
+alter table public.ai_employees add column if not exists response_mode text default 'text' check (response_mode in ('text','voice','both','auto'));
+alter table public.ai_employees add column if not exists voice_name text default 'alloy';
