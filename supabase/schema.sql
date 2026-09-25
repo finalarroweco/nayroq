@@ -84,7 +84,6 @@ create policy "owners manage conversations" on public.conversations for all usin
 drop policy if exists "owners manage messages" on public.messages;
 create policy "owners manage messages" on public.messages for all using (conversation_id in (select c.id from public.conversations c join public.companies co on co.id=c.company_id where co.owner_id=auth.uid())) with check (conversation_id in (select c.id from public.conversations c join public.companies co on co.id=c.company_id where co.owner_id=auth.uid()));
 
-
 create table if not exists public.channel_connections (
  id uuid primary key default uuid_generate_v4(),
  company_id uuid not null references public.companies(id) on delete cascade,
@@ -101,11 +100,9 @@ create policy "owners manage channels" on public.channel_connections for all
 using (company_id in (select id from public.companies where owner_id=auth.uid()))
 with check (company_id in (select id from public.companies where owner_id=auth.uid()));
 
-
 alter table public.leads add column if not exists conversation_id uuid references public.conversations(id) on delete set null;
 alter table public.leads add column if not exists qualification jsonb default '{}'::jsonb;
 alter table public.leads add column if not exists updated_at timestamptz default now();
-
 
 create table if not exists public.follow_ups (
  id uuid primary key default uuid_generate_v4(),
@@ -123,7 +120,6 @@ drop policy if exists "owners manage follow ups" on public.follow_ups;
 create policy "owners manage follow ups" on public.follow_ups for all
 using (company_id in (select id from public.companies where owner_id=auth.uid()))
 with check (company_id in (select id from public.companies where owner_id=auth.uid()));
-
 
 alter table public.companies add column if not exists plan text default 'trial';
 alter table public.companies add column if not exists subscription_status text default 'trialing';
@@ -144,9 +140,7 @@ drop policy if exists "owners view usage" on public.usage_monthly;
 create policy "owners view usage" on public.usage_monthly for select
 using (company_id in (select id from public.companies where owner_id=auth.uid()));
 
-
 alter table public.companies add column if not exists widget_key uuid default uuid_generate_v4();
-
 
 create table if not exists public.notifications (
  id uuid primary key default uuid_generate_v4(),
@@ -163,7 +157,6 @@ drop policy if exists "owners manage notifications" on public.notifications;
 create policy "owners manage notifications" on public.notifications for all
 using (company_id in (select id from public.companies where owner_id=auth.uid()))
 with check (company_id in (select id from public.companies where owner_id=auth.uid()));
-
 
 create table if not exists public.payment_submissions (
  id uuid primary key default uuid_generate_v4(),
@@ -193,7 +186,6 @@ using (bucket_id='payment-receipts');
 
 alter table public.companies add column if not exists subscription_ends_at timestamptz;
 
-
 create table if not exists public.platform_admins (
  user_id uuid primary key references auth.users(id) on delete cascade,
  created_at timestamptz default now()
@@ -203,7 +195,8 @@ drop policy if exists "admins read own admin role" on public.platform_admins;
 create policy "admins read own admin role" on public.platform_admins for select
 using (user_id=auth.uid());
 
-
 -- AI employee voice response settings
 alter table public.ai_employees add column if not exists response_mode text default 'text' check (response_mode in ('text','voice','both','auto'));
 alter table public.ai_employees add column if not exists voice_name text default 'alloy';
+-- Per-employee language localization. Neutral keeps NAYROQ portable across GCC markets.
+alter table public.ai_employees add column if not exists dialect text default 'neutral' check (dialect in ('neutral','omani','saudi','emirati','kuwaiti','bahraini','qatari','gulf','msa'));
