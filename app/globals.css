@@ -31,3 +31,7 @@
 .rolechoices button.comingrole{position:relative;opacity:.82;cursor:not-allowed;background:#f8f7ff!important;border-style:dashed!important}.rolechoices button.comingrole b{display:flex;align-items:center;justify-content:space-between;gap:8px}.rolechoices button.comingrole em{font-style:normal;font-size:8px;padding:4px 7px;border-radius:999px;background:#eeeaff;color:#6256ef;white-space:nowrap}
 /* Homepage light metric card contrast fix */
 .home .metriccard,.metriccard{background:#fff!important;color:#172033!important}.home .metriccard>b,.metriccard>b{color:#172033!important;font-weight:700!important}.home .metriccard .metrics span,.metriccard .metrics span{color:#738094!important}.home .metriccard .metrics strong,.metriccard .metrics strong{color:#172033!important}
+
+/* Production inbox actions: keep secondary actions visible on the light app theme. */
+.inboxhead .subtle{background:#f1f0ff!important;color:#5147d9!important;border:1px solid #dedaff!important;box-shadow:none!important;opacity:1!important;visibility:visible!important}
+.inboxhead>div:last-child{display:flex!important;align-items:center;gap:10px;flex-wrap:wrap}
