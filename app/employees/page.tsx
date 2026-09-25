@@ -13,10 +13,13 @@ export default function EmployeesPage(){
  useEffect(()=>{(async()=>{
   const s=createClient();
   const {data:{user}}=await s.auth.getUser();
-  if(!user){setError(lang==="ar"?"يرجى تسجيل الدخول":"Please sign in");setLoading(false);return;}
-  const {data:membership}=await s.from("company_members").select("company_id").eq("user_id",user.id).limit(1).maybeSingle();
-  if(!membership?.company_id){setError(lang==="ar"?"لم يتم العثور على الشركة":"Company not found");setLoading(false);return;}
-  const {data,error}=await s.from("ai_employees").select("*").eq("company_id",membership.company_id).order("created_at",{ascending:true});
+  if(!user){location.href="/login";return;}
+  let companyId:string|undefined;
+  const {data:owned}=await s.from("companies").select("id").eq("owner_id",user.id).limit(1).maybeSingle();
+  companyId=owned?.id;
+  if(!companyId){const {data:membership}=await s.from("company_members").select("company_id").eq("user_id",user.id).limit(1).maybeSingle();companyId=membership?.company_id;}
+  if(!companyId){setError(lang==="ar"?"لم يتم العثور على الشركة":"Company not found");setLoading(false);return;}
+  const {data,error}=await s.from("ai_employees").select("*").eq("company_id",companyId).order("created_at",{ascending:true});
   if(error)setError(error.message); else setEmployees(data||[]);
   setLoading(false);
  })()},[lang]);
