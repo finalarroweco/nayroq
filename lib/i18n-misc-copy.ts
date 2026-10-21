@@ -9,6 +9,7 @@ export const MISC_EN_COPY = {
   instructionsPlaceholder: "Rules, escalation instructions, things this employee should never do…",
   somethingWentWrong: "Something went wrong",
   unexpectedError: "An unexpected error occurred.",
+  dataSafeRetry: "Your data is safe. Try loading this section again.",
   tryAgain: "Try again",
   pageNotFound: "Page not found",
   pageNotFoundBody: "The page you are looking for does not exist or has moved.",
@@ -31,5 +32,12 @@ export const MISC_EN_COPY = {
   bahrainiArabic: "Bahraini Arabic",
   qatariArabic: "Qatari Arabic",
   gulfNeutral: "Gulf Neutral",
-  modernStandardArabic: "Modern Standard Arabic"
+  modernStandardArabic: "Modern Standard Arabic",
+  loadingWorkforce: "Loading your AI workforce…",
+  liveData: "Live data",
+  hireAnother: "Hire another →",
+  openAnalytics: "Open Analytics →",
+  freeTrialEnded: "Free trial ended.",
+  dataSafePaused: "Your data is safe, but AI activity is paused until you activate a plan.",
+  viewPlans: "View plans →"
 } as const;
