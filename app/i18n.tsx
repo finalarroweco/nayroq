@@ -49,5 +49,23 @@ it:{product:"Prodotto",how:"Come funziona",pricing:"Prezzi",startFree:"Inizia gr
 pt:{product:"Produto",how:"Como funciona",pricing:"Preços",startFree:"Começar grátis",heroEyebrow:"A SUA EQUIPA DE IA",heroTitle:"Contrate funcionários de IA que realmente fazem o trabalho.",heroBody:"A NAYROQ oferece à sua empresa funcionários de IA para vendas, suporte, reservas e acompanhamentos, ligados aos canais usados pelos clientes.",trialCta:"Teste grátis por 3 dias →",seeHow:"Veja como a NAYROQ funciona",forgotTitle:"Esqueceu a palavra-passe?",resetIntro:"Introduza o seu email e enviaremos um link para definir uma nova palavra-passe.",sendReset:"Enviar link",backSignIn:"Voltar ao login",newPassword:"Nova palavra-passe",setPassword:"Definir nova palavra-passe",updatePassword:"Atualizar palavra-passe",goSignIn:"Ir para o login"},
 tr:{product:"Ürün",how:"Nasıl çalışır",pricing:"Fiyatlandırma",startFree:"Ücretsiz başla",heroEyebrow:"AI İŞ GÜCÜNÜZ",heroTitle:"Gerçek işi yapan AI çalışanları işe alın.",heroBody:"NAYROQ işletmenize satış, destek, rezervasyon ve takip için, müşterilerinizin kullandığı kanallara bağlı AI çalışanları sağlar.",trialCta:"3 Gün Ücretsiz Dene →",seeHow:"NAYROQ nasıl çalışır",forgotTitle:"Şifrenizi mi unuttunuz?",resetIntro:"E-postanızı girin; yeni şifre belirlemeniz için bağlantı gönderelim.",sendReset:"Sıfırlama bağlantısı gönder",backSignIn:"Girişe dön",newPassword:"Yeni şifre",setPassword:"Yeni şifre belirle",updatePassword:"Şifreyi güncelle",goSignIn:"Girişe git"}
 };for(const code of Object.keys(pageCopy))dict[code]={...dict[code],...pageCopy[code]};
+const generated:any={
+el:{product:"Προϊόν",how:"Πώς λειτουργεί",pricing:"Τιμές",startFree:"Δωρεάν έναρξη"},
+sv:{product:"Produkt",how:"Så fungerar det",pricing:"Priser",startFree:"Starta gratis"},
+da:{product:"Produkt",how:"Sådan virker det",pricing:"Priser",startFree:"Start gratis"},
+no:{product:"Produkt",how:"Slik fungerer det",pricing:"Priser",startFree:"Start gratis"},
+fi:{product:"Tuote",how:"Näin se toimii",pricing:"Hinnat",startFree:"Aloita ilmaiseksi"},
+cs:{product:"Produkt",how:"Jak to funguje",pricing:"Ceny",startFree:"Začít zdarma"},
+sk:{product:"Produkt",how:"Ako to funguje",pricing:"Ceny",startFree:"Začať zdarma"},
+hu:{product:"Termék",how:"Hogyan működik",pricing:"Árak",startFree:"Ingyenes kezdés"},
+bg:{product:"Продукт",how:"Как работи",pricing:"Цени",startFree:"Започнете безплатно"},
+hr:{product:"Proizvod",how:"Kako radi",pricing:"Cijene",startFree:"Počni besplatno"},
+sr:{product:"Proizvod",how:"Kako radi",pricing:"Cene",startFree:"Počni besplatno"},
+sl:{product:"Izdelek",how:"Kako deluje",pricing:"Cene",startFree:"Začni brezplačno"},
+et:{product:"Toode",how:"Kuidas see töötab",pricing:"Hinnad",startFree:"Alusta tasuta"},
+lv:{product:"Produkts",how:"Kā tas darbojas",pricing:"Cenas",startFree:"Sākt bez maksas"},
+lt:{product:"Produktas",how:"Kaip tai veikia",pricing:"Kainos",startFree:"Pradėti nemokamai"},
+ro:{product:"Produs",how:"Cum funcționează",pricing:"Prețuri",startFree:"Începe gratuit"}
+};for(const code of Object.keys(generated))dict[code]={...dict[code],...generated[code]};
 const C=createContext<any>(null);
 export function LanguageProvider({children}:{children:React.ReactNode}){const[lang,setLang]=useState<Lang>("en");useEffect(()=>{const v=(localStorage.getItem("nayroq_language")||"en") as Lang;setLang(v);document.documentElement.lang=v;document.documentElement.dir=v==="ar"?"rtl":"ltr"},[]);function change(v:Lang){setLang(v);localStorage.setItem("nayroq_language",v);document.documentElement.lang=v;document.documentElement.dir=v==="ar"?"rtl":"ltr"}const value=useMemo(()=>({lang,setLang:change,t:(k:string)=>dict[lang]?.[k]||dict.en[k]||k}),[lang]);return <C.Provider value={value}>{children}</C.Provider>}export function useLanguage(){return useContext(C)}export function LanguageSwitch(){const{lang,setLang}=useLanguage();return <select aria-label="Interface language" className="langswitch" value={lang} onChange={e=>setLang(e.target.value as Lang)}>{Object.entries(INTERFACE_LANGUAGES).map(([code,label])=><option key={code} value={code}>{String(label)}</option>)}</select>}
