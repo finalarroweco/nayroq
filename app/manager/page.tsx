@@ -26,7 +26,7 @@ export default function Manager(){const{lang,t}=useLanguage();
   if(!data)return <main className="loading">{lang==="ar"?"جاري تجهيز ملخص مدير الذكاء الاصطناعي…":"Preparing your AI Manager brief…"}</main>;
   const funnel=[[t("conversations"),data.conversations],[t("leads"),data.leads],[t("qualified"),data.qualified],[t("quotations"),data.quotes],[t("won"),data.wins]];
   return <main className="appshell"><AppNav/><div className="appbody"><main className="module">
-    <header><Link href="/dashboard">← Dashboard</Link><div className="logo"><i>N</i><b>NAYROQ</b></div><span>{lang==="ar"?"مدير الذكاء الاصطناعي":"AI Manager"}</span><LanguageSwitch/></header>
+    <header><Link href="/dashboard">← Dashboard</Link><div className="logo"><i>N</i><b>NAYROQ</b></div><span>{t("manager")}</span><LanguageSwitch/></header>
     <section>
       <div className="eyebrow">{t("executive").toUpperCase()}</div>
       <h1>{lang==="ar"?"هذه نظرة سريعة على أداء فريق الذكاء الاصطناعي.":"Good morning. Here’s what your AI team is doing."}</h1>
