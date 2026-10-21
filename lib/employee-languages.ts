@@ -1,0 +1,4 @@
+export const EMPLOYEE_LANGUAGES=[
+["auto","Auto — detect customer language"],["ar","Arabic"],["en","English"],["sq","Albanian"],["be","Belarusian"],["bs","Bosnian"],["bg","Bulgarian"],["ca","Catalan"],["hr","Croatian"],["cs","Czech"],["da","Danish"],["nl","Dutch"],["et","Estonian"],["fi","Finnish"],["fr","French"],["de","German"],["el","Greek"],["hu","Hungarian"],["is","Icelandic"],["ga","Irish"],["it","Italian"],["lv","Latvian"],["lt","Lithuanian"],["lb","Luxembourgish"],["mk","Macedonian"],["mt","Maltese"],["me","Montenegrin"],["no","Norwegian"],["pl","Polish"],["pt","Portuguese"],["ro","Romanian"],["ru","Russian"],["sr","Serbian"],["sk","Slovak"],["sl","Slovenian"],["es","Spanish"],["sv","Swedish"],["tr","Turkish"],["uk","Ukrainian"],["cy","Welsh"]
+] as const;
+export const languageLabel=(code:string)=>EMPLOYEE_LANGUAGES.find(x=>x[0]===code)?.[1]||code;
