@@ -1,1 +1,8 @@
-export const PLANS={trial:{name:"Free Trial",price:0,employees:1,conversations:100},starter:{name:"Starter",price:19,employees:1,conversations:1500},business:{name:"Business",price:39,employees:3,conversations:5000},growth:{name:"Growth",price:79,employees:999,conversations:15000}} as const;export type PlanKey=keyof typeof PLANS;
+export const PLANS={
+ trial:{name:"Free Trial",price:0,currency:"USD",employees:1,conversations:100},
+ starter:{name:"Starter",price:49,currency:"USD",employees:1,conversations:1500},
+ business:{name:"Business",price:99,currency:"USD",employees:3,conversations:5000},
+ growth:{name:"Growth",price:199,currency:"USD",employees:999,conversations:15000}
+} as const;
+export type PlanKey=keyof typeof PLANS;
+export type PaidPlanKey=Exclude<PlanKey,"trial">;
