@@ -31,7 +31,11 @@ export const GLOBAL_LAUNCH_EN_COPY={
  cancelAnytime:"Cancel anytime",
  otherPaymentMethod:"Other payment method",
  globalPlansBody:"Simple monthly pricing in USD for businesses anywhere in the world.",
- globalLaunch:"BUILT FOR GLOBAL BUSINESS"
+ globalLaunch:"BUILT FOR GLOBAL BUSINESS",
+ trustLine:"Multilingual · WhatsApp Business · Website Chat",
+ multilingual:"Multilingual",
+ multilingualBody:"Serve customers worldwide with automatic language detection and a multilingual platform.",
+ startFreeTrial:"Start Free Trial →"
 }as const;
 
 export const GLOBAL_LAUNCH_AR_COPY:Record<string,string>={
@@ -67,5 +71,9 @@ export const GLOBAL_LAUNCH_AR_COPY:Record<string,string>={
  cancelAnytime:"إلغاء في أي وقت",
  otherPaymentMethod:"طريقة دفع أخرى",
  globalPlansBody:"أسعار شهرية بسيطة بالدولار للشركات في جميع أنحاء العالم.",
- globalLaunch:"مصمم للأعمال حول العالم"
+ globalLaunch:"مصمم للأعمال حول العالم",
+ trustLine:"متعدد اللغات · واتساب للأعمال · محادثة الموقع",
+ multilingual:"متعدد اللغات",
+ multilingualBody:"اخدم العملاء حول العالم من خلال اكتشاف اللغة تلقائياً وواجهة متعددة اللغات.",
+ startFreeTrial:"ابدأ التجربة المجانية ←"
 };
