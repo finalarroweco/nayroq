@@ -52,7 +52,8 @@ export const GLOBAL_LAUNCH_EN_COPY={
  cancelSubscriptionConfirm:"Cancel your PayPal subscription now? AI conversations will stop after cancellation.",
  cancellingSubscription:"Cancelling subscription…",
  subscriptionCancelled:"Your subscription has been cancelled.",
- cancellationError:"We could not cancel the subscription. Please try again or contact support."
+ cancellationError:"We could not cancel the subscription. Please try again or contact support.",
+ changePlanAfterCancel:"Cancel your current subscription before choosing a different plan."
 }as const;
 
 export const GLOBAL_LAUNCH_AR_COPY:Record<string,string>={
@@ -109,5 +110,6 @@ export const GLOBAL_LAUNCH_AR_COPY:Record<string,string>={
  cancelSubscriptionConfirm:"هل تريد إلغاء اشتراك PayPal الآن؟ ستتوقف محادثات الذكاء الاصطناعي بعد الإلغاء.",
  cancellingSubscription:"جاري إلغاء الاشتراك…",
  subscriptionCancelled:"تم إلغاء اشتراكك.",
- cancellationError:"تعذر إلغاء الاشتراك. حاول مرة أخرى أو تواصل مع الدعم."
+ cancellationError:"تعذر إلغاء الاشتراك. حاول مرة أخرى أو تواصل مع الدعم.",
+ changePlanAfterCancel:"ألغِ الاشتراك الحالي قبل اختيار باقة مختلفة."
 };
