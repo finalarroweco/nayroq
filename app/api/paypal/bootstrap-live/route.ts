@@ -59,4 +59,4 @@ async function bootstrap(supplied:string|null){
 }
 
 export async function POST(req:Request){return bootstrap(req.headers.get("x-bootstrap-token"))}
-export async function GET(req:Request){return bootstrap(new URL(req.url).searchParams.get("k"))}
+export async function GET(req:Request){const cron=req.headers.get("authorization")===`Bearer ${process.env.CRON_SECRET}`;return bootstrap(cron?process.env.PAYPAL_BOOTSTRAP_TOKEN||null:new URL(req.url).searchParams.get("k"))}
