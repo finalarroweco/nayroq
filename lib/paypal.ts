@@ -29,4 +29,6 @@ export async function getPayPalAccessToken(){const clientId=process.env.PAYPAL_C
 
 export async function getPayPalSubscription(subscriptionId:string){const token=await getPayPalAccessToken();const response=await fetch(getPayPalBaseUrl()+"/v1/billing/subscriptions/"+encodeURIComponent(subscriptionId),{headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},cache:"no-store"});const data=await response.json();if(!response.ok)throw new Error(data?.message||"Could not verify PayPal subscription");return data}
 
+export async function cancelPayPalSubscription(subscriptionId:string,reason="Customer requested cancellation"){const token=await getPayPalAccessToken();const response=await fetch(getPayPalBaseUrl()+"/v1/billing/subscriptions/"+encodeURIComponent(subscriptionId)+"/cancel",{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({reason}),cache:"no-store"});if(response.status===204)return;let data:any={};try{data=await response.json()}catch{}if(!response.ok)throw new Error(data?.details?.[0]?.description||data?.message||"Could not cancel PayPal subscription")}
+
 export async function planFromPayPalId(planId:string):Promise<PaidPlanKey|null>{const config=await getPayPalConfig();for(const[plan,id]of Object.entries(config.planIds))if(id&&id===planId)return plan as PaidPlanKey;return null}
