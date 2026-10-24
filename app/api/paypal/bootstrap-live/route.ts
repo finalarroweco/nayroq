@@ -4,6 +4,7 @@ import{getPayPalAccessToken,getPayPalBaseUrl,getPayPalEnvironment}from"@/lib/pay
 import{PLANS,type PaidPlanKey}from"@/lib/plans";
 
 export const runtime="nodejs";
+export const dynamic="force-dynamic";
 const paidPlans:PaidPlanKey[]=["starter","business","growth"];
 
 async function paypalPost(path:string,body:any,requestId:string,token:string){
@@ -17,16 +18,15 @@ function planBody(productId:string,plan:PaidPlanKey){
  return{product_id:productId,name:`NAYROQ ${PLANS[plan].name}`,description:`NAYROQ ${PLANS[plan].name} monthly subscription`,billing_cycles:[{frequency:{interval_unit:"MONTH",interval_count:1},tenure_type:"REGULAR",sequence:1,total_cycles:0,pricing_scheme:{fixed_price:{value:PLANS[plan].price.toFixed(2),currency_code:"USD"}}}],payment_preferences:{auto_bill_outstanding:true,payment_failure_threshold:3}};
 }
 
-export async function POST(req:Request){
+async function bootstrap(supplied:string|null){
  try{
-  const supplied=req.headers.get("x-bootstrap-token");
-  if(!supplied||supplied!==process.env.PAYPAL_BOOTSTRAP_TOKEN)return NextResponse.json({error:"Forbidden"},{status:403});
+  if(!supplied||supplied!==process.env.PAYPAL_BOOTSTRAP_TOKEN)return NextResponse.json({error:"Forbidden"},{status:403,headers:{"Cache-Control":"no-store"}});
   const environment=getPayPalEnvironment();
-  if(environment!=="live")return NextResponse.json({error:"PAYPAL_ENV must be live"},{status:409});
-  if(!process.env.PAYPAL_CLIENT_ID||!process.env.PAYPAL_CLIENT_SECRET)return NextResponse.json({error:"PayPal Live credentials are not configured"},{status:503});
+  if(environment!=="live")return NextResponse.json({error:"PAYPAL_ENV must be live"},{status:409,headers:{"Cache-Control":"no-store"}});
+  if(!process.env.PAYPAL_CLIENT_ID||!process.env.PAYPAL_CLIENT_SECRET)return NextResponse.json({error:"PayPal Live credentials are not configured"},{status:503,headers:{"Cache-Control":"no-store"}});
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if(!url||!serviceKey)return NextResponse.json({error:"Supabase server configuration is missing"},{status:503});
+  if(!url||!serviceKey)return NextResponse.json({error:"Supabase server configuration is missing"},{status:503,headers:{"Cache-Control":"no-store"}});
   const admin=createClient(url,serviceKey);
   const token=await getPayPalAccessToken();
   const{data:current,error:readError}=await admin.from("paypal_config").select("*").eq("singleton",true).maybeSingle();
@@ -51,9 +51,12 @@ export async function POST(req:Request){
   }
   const{error}=await admin.from("paypal_config").upsert({singleton:true,environment,product_id:productId,starter_plan_id:planIds.starter,business_plan_id:planIds.business,growth_plan_id:planIds.growth,webhook_id:webhookId,updated_at:new Date().toISOString()},{onConflict:"singleton"});
   if(error)throw error;
-  return NextResponse.json({ok:true,environment,productId,planIds,webhookId,prices:{starter:PLANS.starter.price,business:PLANS.business.price,growth:PLANS.growth.price}});
+  return NextResponse.json({ok:true,environment,productId,planIds,webhookId,prices:{starter:PLANS.starter.price,business:PLANS.business.price,growth:PLANS.growth.price}},{headers:{"Cache-Control":"no-store"}});
  }catch(e:any){
   console.error("Temporary PayPal Live bootstrap failed",e);
-  return NextResponse.json({error:e?.message||"PayPal Live bootstrap failed"},{status:500});
+  return NextResponse.json({error:e?.message||"PayPal Live bootstrap failed"},{status:500,headers:{"Cache-Control":"no-store"}});
  }
 }
+
+export async function POST(req:Request){return bootstrap(req.headers.get("x-bootstrap-token"))}
+export async function GET(req:Request){return bootstrap(new URL(req.url).searchParams.get("k"))}
