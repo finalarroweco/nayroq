@@ -1,5 +1,5 @@
 export const PLANS={
- trial:{name:"Free Trial",price:0,currency:"USD",employees:1,conversations:100},
+ trial:{name:"Setup Mode",price:0,currency:"USD",employees:1,conversations:0},
  starter:{name:"Starter",price:39,currency:"USD",employees:1,conversations:1500},
  business:{name:"Business",price:69,currency:"USD",employees:3,conversations:5000},
  growth:{name:"Growth",price:99,currency:"USD",employees:999,conversations:15000}
