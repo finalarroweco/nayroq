@@ -84,9 +84,9 @@ async function writeCachedChunk(lang:SupportedInterfaceLang,part:number,translat
   }
 }
 
-function translationProviders():TranslationProvider[]{
+function translationProviders(runtimeOidcToken?:string):TranslationProvider[]{
   const providers:TranslationProvider[]=[];
-  const gatewayToken=process.env.AI_GATEWAY_API_KEY||process.env.VERCEL_OIDC_TOKEN;
+  const gatewayToken=process.env.AI_GATEWAY_API_KEY||process.env.VERCEL_OIDC_TOKEN||runtimeOidcToken;
   if(gatewayToken){
     providers.push({
       name:"Vercel AI Gateway",
@@ -158,10 +158,10 @@ async function translateWithProvider(provider:TranslationProvider,prompt:string,
   throw new Error(`${provider.name}: ${lastError}`);
 }
 
-async function translateChunk(lang:SupportedInterfaceLang,keys:string[]){
+async function translateChunk(lang:SupportedInterfaceLang,keys:string[],runtimeOidcToken?:string){
   const source=Object.fromEntries(keys.map(key=>[key,I18N_SOURCE_COPY[key]]));
   const prompt=`Translate every JSON value from English into ${ALL_LANGUAGE_NAMES[lang]}. Return only one valid JSON object with exactly the same keys. Preserve NAYROQ, Final Arrow, AI, CRM, WhatsApp, Meta, API, PayPal, Vercel, URLs, email addresses, currency codes, numbers, arrows, placeholders, HTML tags and technical identifiers. Use clear, natural and professional software-interface language. Translate every ordinary interface word and sentence. Do not omit, rename or add keys.\n\n${JSON.stringify(source)}`;
-  const providers=translationProviders();
+  const providers=translationProviders(runtimeOidcToken);
   if(!providers.length)throw new Error("Translation service is not configured");
   const errors:string[]=[];
   for(const provider of providers){
@@ -176,7 +176,7 @@ export function isSupportedInterfaceLanguage(value:string):value is SupportedInt
   return value in ALL_INTERFACE_LANGUAGES;
 }
 
-export async function getInterfaceTranslationChunk(lang:SupportedInterfaceLang,part:number){
+export async function getInterfaceTranslationChunk(lang:SupportedInterfaceLang,part:number,runtimeOidcToken?:string){
   const keys=I18N_ALL_KEYS.slice(part*COPY_CHUNK_SIZE,(part+1)*COPY_CHUNK_SIZE);
   if(!keys.length)return{translations:{},done:true,cached:true};
   const cached=await readCachedChunk(lang,part,keys);
@@ -185,7 +185,7 @@ export async function getInterfaceTranslationChunk(lang:SupportedInterfaceLang,p
     done:(part+1)*COPY_CHUNK_SIZE>=I18N_ALL_KEYS.length,
     cached:true
   };
-  const translations=await translateChunk(lang,keys);
+  const translations=await translateChunk(lang,keys,runtimeOidcToken);
   await writeCachedChunk(lang,part,translations);
   return{
     translations,
