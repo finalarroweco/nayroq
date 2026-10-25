@@ -1,26 +1,16 @@
 import{NextResponse}from"next/server";
 import{
-  COPY_CHUNK_SIZE,
-  EN_COPY,
-  UI_COPY_VERSION
-}from"@/lib/i18n-copy";
-import{EXTRA_EN_COPY}from"@/lib/i18n-extra-copy";
-import{MISC_EN_COPY}from"@/lib/i18n-misc-copy";
-import{GLOBAL_LAUNCH_EN_COPY}from"@/lib/global-launch-copy";
+  I18N_API_VERSION,
+  I18N_TOTAL_PARTS,
+  getInterfaceTranslationChunk,
+  type SupportedInterfaceLang
+}from"@/lib/i18n-server";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 export const maxDuration=300;
 
-const SOURCE_COPY={
-  ...EN_COPY,
-  ...EXTRA_EN_COPY,
-  ...MISC_EN_COPY,
-  ...GLOBAL_LAUNCH_EN_COPY
-};
-const TOTAL=Math.ceil(Object.keys(SOURCE_COPY).length/COPY_CHUNK_SIZE);
-const VERSION=UI_COPY_VERSION+"-atomic-language-pack-v2";
-const LANGUAGES=["ar","fr","es","it"]as const;
+const LANGUAGES:SupportedInterfaceLang[]=["ar","fr","es","it"];
 
 export async function GET(req:Request){
   const auth=req.headers.get("authorization");
@@ -28,29 +18,32 @@ export async function GET(req:Request){
     return NextResponse.json({error:"Forbidden"},{status:403});
   }
 
-  const base=(process.env.NEXT_PUBLIC_APP_URL||"https://nayroq.finalarrow.com").replace(/\/$/,"");
-  const results:Record<string,any>={};
+  const results:Record<string,{parts:number;errors:string[]}>= {};
 
   for(const lang of LANGUAGES){
     let next=0;
     const errors:string[]=[];
+
     async function worker(){
       while(true){
         const part=next++;
-        if(part>=TOTAL)return;
+        if(part>=I18N_TOTAL_PARTS)return;
         try{
-          const response=await fetch(`${base}/api/i18n?lang=${lang}&part=${part}&v=${encodeURIComponent(VERSION)}`,{cache:"no-store"});
-          const data=await response.json();
-          if(!response.ok)throw new Error(data?.error||`HTTP ${response.status}`);
+          await getInterfaceTranslationChunk(lang,part);
         }catch(error:any){
           errors.push(`part ${part}: ${error?.message||"failed"}`);
         }
       }
     }
+
     await Promise.all([worker(),worker()]);
-    results[lang]={parts:TOTAL,errors};
+    results[lang]={parts:I18N_TOTAL_PARTS,errors};
   }
 
   console.log("NAYROQ interface language prewarm complete",results);
-  return NextResponse.json({ok:true,version:VERSION,results});
+  const failed=Object.values(results).some(result=>result.errors.length>0);
+  return NextResponse.json(
+    {ok:!failed,version:I18N_API_VERSION,results},
+    {status:failed?500:200,headers:{"Cache-Control":"no-store"}}
+  );
 }
