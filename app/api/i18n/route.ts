@@ -1,4 +1,5 @@
 import{NextResponse}from"next/server";
+import{getVercelOidcToken}from"@vercel/oidc";
 import{
   I18N_API_VERSION,
   getInterfaceTranslationChunk,
@@ -15,6 +16,12 @@ function responseHeaders(){
   };
 }
 
+async function resolveOidcToken(req:Request){
+  const header=req.headers.get("x-vercel-oidc-token");
+  if(header)return header;
+  try{return await getVercelOidcToken()}catch{return undefined}
+}
+
 export async function GET(req:Request){
   try{
     const url=new URL(req.url);
@@ -26,7 +33,7 @@ export async function GET(req:Request){
       return NextResponse.json({error:"Unsupported language"},{status:400});
     }
 
-    const runtimeOidcToken=req.headers.get("x-vercel-oidc-token")||undefined;
+    const runtimeOidcToken=await resolveOidcToken(req);
     const result=await getInterfaceTranslationChunk(langValue,part,runtimeOidcToken);
     return NextResponse.json(
       {...result,version:I18N_API_VERSION},
