@@ -5,7 +5,7 @@
       "schedule": "0 * * * *"
     },
     {
-      "path": "/api/i18n/prewarm-priority",
+      "path": "/api/i18n/export-source",
       "schedule": "* * * * *"
     }
   ]
