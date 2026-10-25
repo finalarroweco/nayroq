@@ -1,0 +1,29 @@
+name: Audit NAYROQ interface localization
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "app/**/*.tsx"
+      - "app/widget.js/route.ts"
+      - "lib/i18n-*.ts"
+      - "lib/global-launch-copy.ts"
+      - "scripts/i18n-audit.mjs"
+      - ".github/workflows/i18n-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Find untranslated interface text
+        run: node scripts/i18n-audit.mjs
