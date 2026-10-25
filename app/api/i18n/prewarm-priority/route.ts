@@ -36,9 +36,12 @@ export async function GET(req:Request){
     return NextResponse.json({error:"Supabase server configuration is missing"},{status:503,headers:{"Cache-Control":"no-store"}});
   }
 
+  const runtimeOidcToken=req.headers.get("x-vercel-oidc-token")||undefined;
   const batchParam=Number(url.searchParams.get("batch")||4);
   const batchSize=Math.max(1,Math.min(8,Number.isFinite(batchParam)?Math.floor(batchParam):4));
-  const model=process.env.OPENAI_TRANSLATION_MODEL||process.env.OPENAI_MODEL||"gpt-5.1";
+  const model=runtimeOidcToken
+    ?`gateway:${process.env.VERCEL_AI_GATEWAY_MODEL||"google/gemini-3.6-flash"}`
+    :process.env.OPENAI_TRANSLATION_MODEL||process.env.OPENAI_MODEL||"gpt-5.1";
   const total=LANGUAGES.length*I18N_TOTAL_PARTS;
 
   const{data:existingRows,error:readError}=await admin
@@ -84,14 +87,14 @@ export async function GET(req:Request){
     version:I18N_API_VERSION,
     model,
     status:"started",
-    detail:`Processing ${batch.length} of ${missing.length} missing chunks.`,
+    detail:`Processing ${batch.length} of ${missing.length} missing chunks. OIDC: ${runtimeOidcToken?"available":"missing"}.`,
     completed:existing.size,
     total
   });
 
   const results=await Promise.all(batch.map(async task=>{
     try{
-      const result=await getInterfaceTranslationChunk(task.lang,task.part);
+      const result=await getInterfaceTranslationChunk(task.lang,task.part,runtimeOidcToken);
       await admin.from("ui_translation_prewarm_status").insert({
         version:I18N_API_VERSION,
         model,
@@ -127,6 +130,7 @@ export async function GET(req:Request){
     complete:completed>=total,
     version:I18N_API_VERSION,
     model,
+    oidcAvailable:Boolean(runtimeOidcToken),
     batchSize,
     completed,
     total,
