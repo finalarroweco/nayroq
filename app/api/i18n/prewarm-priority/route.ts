@@ -1,5 +1,6 @@
 import{NextResponse}from"next/server";
 import{createClient}from"@supabase/supabase-js";
+import{getVercelOidcToken}from"@vercel/oidc";
 import{
   I18N_API_VERSION,
   I18N_TOTAL_PARTS,
@@ -21,6 +22,12 @@ function getAdmin(){
   return createClient(url,key,{auth:{persistSession:false}});
 }
 
+async function resolveOidcToken(req:Request){
+  const header=req.headers.get("x-vercel-oidc-token");
+  if(header)return header;
+  try{return await getVercelOidcToken()}catch{return undefined}
+}
+
 export async function GET(req:Request){
   const url=new URL(req.url);
   const auth=req.headers.get("authorization");
@@ -36,7 +43,7 @@ export async function GET(req:Request){
     return NextResponse.json({error:"Supabase server configuration is missing"},{status:503,headers:{"Cache-Control":"no-store"}});
   }
 
-  const runtimeOidcToken=req.headers.get("x-vercel-oidc-token")||undefined;
+  const runtimeOidcToken=await resolveOidcToken(req);
   const batchParam=Number(url.searchParams.get("batch")||4);
   const batchSize=Math.max(1,Math.min(8,Number.isFinite(batchParam)?Math.floor(batchParam):4));
   const model=runtimeOidcToken
