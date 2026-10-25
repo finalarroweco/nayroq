@@ -26,7 +26,8 @@ export async function GET(req:Request){
       return NextResponse.json({error:"Unsupported language"},{status:400});
     }
 
-    const result=await getInterfaceTranslationChunk(langValue,part);
+    const runtimeOidcToken=req.headers.get("x-vercel-oidc-token")||undefined;
+    const result=await getInterfaceTranslationChunk(langValue,part,runtimeOidcToken);
     return NextResponse.json(
       {...result,version:I18N_API_VERSION},
       {headers:responseHeaders()}
