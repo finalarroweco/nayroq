@@ -3,7 +3,7 @@ const ROOT=process.cwd(),UI_ROOTS=['app'];
 const includeFile=file=>file.endsWith('.tsx')||file.endsWith('widget.js/route.ts');
 const ignoredPath=file=>file.includes('/api/')||file.endsWith('/layout.tsx');
 const visibleAttrs=new Set(['placeholder','title','aria-label','alt']);
-const ignoredAttrs=new Set(['className','href','src','id','key','type','name','value','method','target','rel','accept','role','action','htmlFor','data-no-translate','style']);
+const ignoredAttrs=new Set(['className','href','src','id','key','type','name','value','method','target','rel','accept','role','action','htmlFor','data-no-translate','style','disabled','checked','selected','rows','minLength','maxLength','onClick','onChange','onSubmit','onKeyDown']);
 const technical=new Set(['NAYROQ','AI','CRM','API','Meta','PayPal','Vercel','WhatsApp','Instagram','Facebook','Messenger','USD','OMR','SAR','AED','KWD','QAR','BHD','IBAN','ID','N','GET','POST','PUT','PATCH','DELETE','OPTIONS','Authorization','Bearer','Enter','Alloy','Ash','Ballad','Coral','Echo','Fable','Nova','Onyx','Sage','Shimmer','production','preview','development','sandbox','live','nodejs','active','paused','draft','pending','approved','rejected','trial','trialing','setup','cancelled','expired','suspended','starter','business','growth','sales','support','booking','receptionist','follow_up','collections','auto','text','voice','both','neutral','omani','saudi','emirati','kuwaiti','bahraini','qatari','gulf','msa','professional','friendly','warm','concise','website','whatsapp','instagram','facebook','customer','ai','human','system','open','won','lost','qualified','new','quotation_sent','followup']);
 function walk(dir,out=[]){if(!fs.existsSync(dir))return out;for(const entry of fs.readdirSync(dir,{withFileTypes:true})){const full=path.join(dir,entry.name);entry.isDirectory()?walk(full,out):includeFile(full)&&!ignoredPath(full)&&out.push(full)}return out}
 const normalize=value=>value.replace(/\s+/g,' ').trim();
@@ -11,14 +11,16 @@ function lineOf(sf,node){const p=sf.getLineAndCharacterOfPosition(node.getStart(
 function isTechnical(value){const s=normalize(value);if(!s||s.length<=1||!/[A-Za-zÀ-ž\u0600-\u06FF]/u.test(s))return true;if(technical.has(s)||/^&[a-z]+;$/i.test(s))return true;if(/^https?:\/\//i.test(s)||/^mailto:/i.test(s)||/^tel:/i.test(s)||s.startsWith('/')||s.startsWith('@/'))return true;if(/^#[0-9a-f]{3,8}$/i.test(s)||/^\d+(?:\.\d+)?$/.test(s))return true;if(/^[A-Z0-9_-]{2,}$/.test(s)&&!s.includes(' '))return true;if(/^[a-z0-9_./:@-]+$/.test(s)&&!s.includes(' '))return true;if(/^\{.*\}$/.test(s)||/^<script\b/i.test(s)||/^\\?" async><\/script>$/i.test(s))return true;return false}
 const isTCall=node=>ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='t';
 function hasTAncestor(node,stop){let p=node.parent;while(p&&p!==stop){if(isTCall(p))return true;p=p.parent}return false}
+function nearestJsxAttribute(node){let p=node.parent;while(p){if(ts.isJsxAttribute(p))return p;if(ts.isJsxElement(p)||ts.isJsxSelfClosingElement(p))return null;p=p.parent}return null}
+function insideIgnoredAttribute(node){const attr=nearestJsxAttribute(node);return Boolean(attr&&ignoredAttrs.has(attr.name.getText()))}
 function hasNoTranslate(node){let p=node;while(p){if(ts.isJsxElement(p)){const attrs=p.openingElement.attributes.properties;if(attrs.some(a=>ts.isJsxAttribute(a)&&a.name.getText()==='data-no-translate'))return true}if(ts.isJsxSelfClosingElement(p)){if(p.attributes.properties.some(a=>ts.isJsxAttribute(a)&&a.name.getText()==='data-no-translate'))return true}p=p.parent}return false}
-function addIssue(issues,sf,node,value,kind){const text=normalize(value);if(isTechnical(text)||hasNoTranslate(node))return;issues.push({file:path.relative(ROOT,sf.fileName).replaceAll('\\','/'),loc:lineOf(sf,node),kind,text})}
+function addIssue(issues,sf,node,value,kind){const text=normalize(value);if(isTechnical(text)||hasNoTranslate(node)||insideIgnoredAttribute(node))return;issues.push({file:path.relative(ROOT,sf.fileName).replaceAll('\\','/'),loc:lineOf(sf,node),kind,text})}
 const issues=[];
 for(const file of UI_ROOTS.flatMap(root=>walk(path.join(ROOT,root)))){
  const source=fs.readFileSync(file,'utf8'),sf=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,file.endsWith('.tsx')?ts.ScriptKind.TSX:ts.ScriptKind.TS);
- function inspectExpression(expr,container){function scan(node){if(hasTAncestor(node,container)||hasNoTranslate(node))return;if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node))addIssue(issues,sf,node,node.text,'jsx-expression');ts.forEachChild(node,scan)}scan(expr)}
+ function inspectExpression(expr,container){if(insideIgnoredAttribute(container))return;function scan(node){if(hasTAncestor(node,container)||hasNoTranslate(node)||insideIgnoredAttribute(node))return;if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node))addIssue(issues,sf,node,node.text,'jsx-expression');ts.forEachChild(node,scan)}scan(expr)}
  function visit(node){
-  if(hasNoTranslate(node))return;
+  if(hasNoTranslate(node)||insideIgnoredAttribute(node))return;
   if(ts.isJsxText(node))addIssue(issues,sf,node,node.getText(sf),'jsx-text');
   if(ts.isJsxAttribute(node)){const name=node.name.getText(sf);if(ignoredAttrs.has(name))return;if(node.initializer&&ts.isStringLiteral(node.initializer)&&visibleAttrs.has(name))addIssue(issues,sf,node.initializer,node.initializer.text,`attribute:${name}`);if(node.initializer&&ts.isJsxExpression(node.initializer)&&node.initializer.expression&&visibleAttrs.has(name))inspectExpression(node.initializer.expression,node.initializer);return}
   if(ts.isJsxExpression(node)&&node.expression)inspectExpression(node.expression,node);
