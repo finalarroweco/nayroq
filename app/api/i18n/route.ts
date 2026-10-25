@@ -1,4 +1,5 @@
 import{NextResponse}from"next/server";
+import{createClient}from"@supabase/supabase-js";
 import{
   COPY_CHUNK_SIZE,
   EN_COPY,
@@ -47,6 +48,60 @@ function outputText(data:any){
   return text;
 }
 
+function isValidChunk(value:any,keys:string[]):value is Record<string,string>{
+  return Boolean(value)&&keys.every(key=>typeof value[key]==="string"&&Boolean(value[key].trim()));
+}
+
+function responseHeaders(){
+  return{
+    "Cache-Control":"public, s-maxage=31536000, stale-while-revalidate=86400",
+    "X-NAYROQ-I18N-Version":API_VERSION
+  };
+}
+
+function getAdmin(){
+  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if(!url||!key)return null;
+  return createClient(url,key,{auth:{persistSession:false}});
+}
+
+async function readCachedChunk(lang:SupportedLang,part:number,keys:string[]){
+  const admin=getAdmin();
+  if(!admin)return null;
+  try{
+    const{data,error}=await admin
+      .from("ui_translation_chunks")
+      .select("translations")
+      .eq("version",API_VERSION)
+      .eq("lang",lang)
+      .eq("part",part)
+      .maybeSingle();
+    if(error||!isValidChunk(data?.translations,keys))return null;
+    return data.translations as Record<string,string>;
+  }catch(error){
+    console.error("Could not read interface translation cache",error);
+    return null;
+  }
+}
+
+async function writeCachedChunk(lang:SupportedLang,part:number,translations:Record<string,string>){
+  const admin=getAdmin();
+  if(!admin)return;
+  try{
+    const{error}=await admin.from("ui_translation_chunks").upsert({
+      version:API_VERSION,
+      lang,
+      part,
+      translations,
+      updated_at:new Date().toISOString()
+    },{onConflict:"version,lang,part"});
+    if(error)console.error("Could not save interface translation cache",error);
+  }catch(error){
+    console.error("Could not save interface translation cache",error);
+  }
+}
+
 async function translateChunk(lang:SupportedLang,keys:string[]){
   const source=Object.fromEntries(keys.map(key=>[key,SOURCE_COPY[key]]));
   const apiKey=process.env.OPENAI_API_KEY;
@@ -84,12 +139,12 @@ async function translateChunk(lang:SupportedLang,keys:string[]){
 
     try{
       const parsed=JSON.parse(raw);
-      const invalid=keys.filter(key=>typeof parsed?.[key]!=="string"||!parsed[key].trim());
-      if(invalid.length){
+      if(!isValidChunk(parsed,keys)){
+        const invalid=keys.filter(key=>typeof parsed?.[key]!=="string"||!parsed[key].trim());
         lastError=`Translation response omitted ${invalid.length} strings`;
         continue;
       }
-      return Object.fromEntries(keys.map(key=>[key,parsed[key].trim()]));
+      return Object.fromEntries(keys.map(key=>[key,parsed[key].trim()]))as Record<string,string>;
     }catch{
       lastError="Invalid translation JSON response";
       console.error("Interface translation JSON parse failed",raw.slice(0,500));
@@ -114,24 +169,33 @@ export async function GET(req:Request){
     if(!keys.length){
       return NextResponse.json(
         {translations:{},done:true,version:API_VERSION},
-        {headers:{
-          "Cache-Control":"public, s-maxage=31536000, stale-while-revalidate=86400",
-          "X-NAYROQ-I18N-Version":API_VERSION
-        }}
+        {headers:responseHeaders()}
+      );
+    }
+
+    const cached=await readCachedChunk(lang,part,keys);
+    if(cached){
+      return NextResponse.json(
+        {
+          translations:cached,
+          done:(part+1)*COPY_CHUNK_SIZE>=ALL_KEYS.length,
+          version:API_VERSION,
+          cached:true
+        },
+        {headers:responseHeaders()}
       );
     }
 
     const translations=await translateChunk(lang,keys);
+    await writeCachedChunk(lang,part,translations);
     return NextResponse.json(
       {
         translations,
         done:(part+1)*COPY_CHUNK_SIZE>=ALL_KEYS.length,
-        version:API_VERSION
+        version:API_VERSION,
+        cached:false
       },
-      {headers:{
-        "Cache-Control":"public, s-maxage=31536000, stale-while-revalidate=86400",
-        "X-NAYROQ-I18N-Version":API_VERSION
-      }}
+      {headers:responseHeaders()}
     );
   }catch(error:any){
     console.error("Interface translation failed",error);
