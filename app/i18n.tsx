@@ -1,8 +1,7 @@
 "use client";
 
 import{createContext,useCallback,useContext,useEffect,useMemo,useRef,useState}from"react";
-import{AR_COPY,COPY_CHUNK_SIZE,EN_COPY,INTERFACE_LANGUAGES,SEEDED_TRANSLATIONS,UI_COPY_VERSION,type Lang}from"@/lib/i18n-copy";
-import{EXTRA_INTERFACE_LANGUAGES,type ExtraInterfaceLang}from"@/lib/i18n-extra-languages";
+import{AR_COPY,COPY_CHUNK_SIZE,EN_COPY,INTERFACE_LANGUAGES,SEEDED_TRANSLATIONS,UI_COPY_VERSION}from"@/lib/i18n-copy";
 import{EXTRA_EN_COPY}from"@/lib/i18n-extra-copy";
 import{MISC_EN_COPY}from"@/lib/i18n-misc-copy";
 import{AR_EXTRA_COPY}from"@/lib/i18n-ar-extra";
@@ -10,8 +9,8 @@ import{GLOBAL_LAUNCH_EN_COPY,GLOBAL_LAUNCH_AR_COPY}from"@/lib/global-launch-copy
 import{COMPLETE_EN_COPY,COMPLETE_AR_COPY}from"@/lib/i18n-complete-copy";
 import{FINAL_EN_COPY,FINAL_AR_COPY}from"@/lib/i18n-final-copy";
 
-type InterfaceLang=Lang|ExtraInterfaceLang;type Copy=Partial<Record<string,string>>;type LanguageContext={lang:InterfaceLang;selectedLang:InterfaceLang;setLang:(lang:InterfaceLang)=>void;t:(key:string)=>string;isTranslating:boolean};type CachedPack={version:string;keyCount:number;translations:Copy};
-const ALL_INTERFACE_LANGUAGES={...INTERFACE_LANGUAGES,...EXTRA_INTERFACE_LANGUAGES}as const;
+type InterfaceLang="en"|"ar"|"fr"|"es"|"it";type Copy=Partial<Record<string,string>>;type LanguageContext={lang:InterfaceLang;selectedLang:InterfaceLang;setLang:(lang:InterfaceLang)=>void;t:(key:string)=>string;isTranslating:boolean};type CachedPack={version:string;keyCount:number;translations:Copy};
+const ALL_INTERFACE_LANGUAGES={en:INTERFACE_LANGUAGES.en,ar:INTERFACE_LANGUAGES.ar,fr:INTERFACE_LANGUAGES.fr,es:INTERFACE_LANGUAGES.es,it:INTERFACE_LANGUAGES.it}as const;
 const SOURCE_COPY:Record<string,string>={...EN_COPY,...EXTRA_EN_COPY,...MISC_EN_COPY,...GLOBAL_LAUNCH_EN_COPY,...COMPLETE_EN_COPY,...FINAL_EN_COPY};
 const ALL_KEYS=Object.keys(SOURCE_COPY),CACHE_VERSION=UI_COPY_VERSION+"-complete-interface-v4",C=createContext<LanguageContext|null>(null),normalize=(value:string)=>value.replace(/\s+/g," ").trim(),reverseEnglish=new Map<string,string>();
 for(const[key,value]of Object.entries(SOURCE_COPY))if(value)reverseEnglish.set(normalize(value),key);
