@@ -1,0 +1,37 @@
+name: Prewarm NAYROQ interface languages
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/prewarm-i18n.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  prewarm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ar, fr, es, it]
+    steps:
+      - name: Prewarm ${{ matrix.language }} language pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          lang="${{ matrix.language }}"
+          version="2026-10-21-v3-atomic-language-pack-v2"
+          for part in $(seq 0 14); do
+            url="https://nayroq.finalarrow.com/api/i18n?lang=${lang}&part=${part}&v=${version}"
+            echo "Fetching ${url}"
+            body=$(curl --fail --silent --show-error --retry 2 --retry-all-errors "$url")
+            echo "$body" | jq -e '.translations != null' >/dev/null
+            if echo "$body" | jq -e '.done == true' >/dev/null; then
+              echo "${lang} complete at part ${part}"
+              break
+            fi
+            sleep 1
+          done
