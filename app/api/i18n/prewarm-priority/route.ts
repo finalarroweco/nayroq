@@ -6,13 +6,16 @@ export const dynamic="force-dynamic";
 export const maxDuration=300;
 
 const LANGUAGES:SupportedInterfaceLang[]=["ar","fr","es","it"];
-
 type Task={lang:SupportedInterfaceLang;part:number};
 
 export async function GET(req:Request){
+  const url=new URL(req.url);
   const auth=req.headers.get("authorization");
-  if(!process.env.CRON_SECRET||auth!==`Bearer ${process.env.CRON_SECRET}`){
-    return NextResponse.json({error:"Forbidden"},{status:403});
+  const supplied=req.headers.get("x-prewarm-token")||url.searchParams.get("token");
+  const cronAuthorized=Boolean(process.env.CRON_SECRET&&auth===`Bearer ${process.env.CRON_SECRET}`);
+  const tokenAuthorized=Boolean(process.env.I18N_PREWARM_TOKEN&&supplied===process.env.I18N_PREWARM_TOKEN);
+  if(!cronAuthorized&&!tokenAuthorized){
+    return NextResponse.json({error:"Forbidden"},{status:403,headers:{"Cache-Control":"no-store"}});
   }
 
   const tasks:Task[]=[];
@@ -44,5 +47,8 @@ export async function GET(req:Request){
   await Promise.all(Array.from({length:4},()=>worker()));
   const failed=Object.values(results).some(result=>result.errors.length>0);
   console.log("NAYROQ priority language prewarm",{version:I18N_API_VERSION,parts:I18N_TOTAL_PARTS,results});
-  return NextResponse.json({ok:!failed,version:I18N_API_VERSION,parts:I18N_TOTAL_PARTS,results},{status:failed?500:200,headers:{"Cache-Control":"no-store"}});
+  return NextResponse.json(
+    {ok:!failed,version:I18N_API_VERSION,parts:I18N_TOTAL_PARTS,results},
+    {status:failed?500:200,headers:{"Cache-Control":"no-store"}}
+  );
 }
