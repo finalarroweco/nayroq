@@ -3,6 +3,7 @@
 type EventValue=string|number|boolean;
 type EventData=Record<string,EventValue|undefined|null>;
 
+const PUBLIC_HOSTNAME="nayroq.finalarrow.com";
 let memoryVisitorId="";
 let memorySessionId="";
 
@@ -81,7 +82,7 @@ function context(){
 }
 
 function send(payload:Record<string,unknown>){
- if(typeof window==="undefined")return;
+ if(typeof window==="undefined"||location.hostname!==PUBLIC_HOSTNAME)return;
  const body=JSON.stringify({...context(),...payload});
  try{
   if(navigator.sendBeacon){
@@ -93,7 +94,7 @@ function send(payload:Record<string,unknown>){
 }
 
 export function trackPageView(path=location.pathname){
- if(typeof window==="undefined")return;
+ if(typeof window==="undefined"||location.hostname!==PUBLIC_HOSTNAME)return;
  try{
   const now=Date.now();
   const previous=JSON.parse(sessionStorage.getItem("nayroq_last_pageview")||"null");
@@ -108,7 +109,7 @@ export function trackNayroqEvent(name:string,data:EventData={}){
 }
 
 export function trackNayroqEventOnce(name:string,data:EventData={},scope="global"){
- if(typeof window==="undefined")return;
+ if(typeof window==="undefined"||location.hostname!==PUBLIC_HOSTNAME)return;
  const key=`nayroq_event_${scope}_${name.replace(/\s+/g,"_").toLowerCase()}`;
  try{
   if(localStorage.getItem(key))return;
