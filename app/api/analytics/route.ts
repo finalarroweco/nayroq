@@ -4,12 +4,7 @@ import{createClient}from"@supabase/supabase-js";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 
-const APP_ORIGINS=new Set([
- (process.env.NEXT_PUBLIC_APP_URL||"https://nayroq.finalarrow.com").replace(/\/$/,""),
- "https://nayroq.finalarrow.com",
- "https://nayroq.vercel.app",
- "https://nayroq-55-ce62.vercel.app"
-]);
+const PUBLIC_ORIGIN=(process.env.NEXT_PUBLIC_APP_URL||"https://nayroq.finalarrow.com").replace(/\/$/,"");
 
 function text(value:unknown,max:number){
  if(typeof value!=="string")return null;
@@ -33,7 +28,7 @@ function safeEventData(value:unknown){
 export async function POST(req:Request){
  try{
   const origin=req.headers.get("origin");
-  if(origin&&!APP_ORIGINS.has(origin))return NextResponse.json({error:"Forbidden"},{status:403});
+  if(origin!==PUBLIC_ORIGIN)return NextResponse.json({error:"Forbidden"},{status:403});
   const length=Number(req.headers.get("content-length")||0);
   if(length>32768)return NextResponse.json({error:"Payload too large"},{status:413});
 
@@ -43,6 +38,8 @@ export async function POST(req:Request){
   const visitorId=text(body?.visitorId,128);
   const sessionId=text(body?.sessionId,128);
   const path=text(body?.path,500);
+  const hostname=text(body?.hostname,255);
+  if(hostname!==new URL(PUBLIC_ORIGIN).hostname)return NextResponse.json({error:"Forbidden"},{status:403});
   if(!visitorId||!sessionId||!path||visitorId.length<8||sessionId.length<8||eventType==="event"&&!eventName){
    return NextResponse.json({error:"Invalid analytics event"},{status:400});
   }
@@ -57,7 +54,7 @@ export async function POST(req:Request){
    event_type:eventType,
    event_name:eventName,
    path,
-   hostname:text(body?.hostname,255),
+   hostname,
    referrer:text(body?.referrer,500),
    language:text(body?.language,20),
    device_type:text(body?.deviceType,30),
