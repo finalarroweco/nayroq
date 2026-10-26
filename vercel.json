@@ -3,10 +3,6 @@
     {
       "path": "/api/follow-ups/run",
       "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/i18n/self-test",
-      "schedule": "* * * * *"
     }
   ]
 }
