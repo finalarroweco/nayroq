@@ -61,8 +61,18 @@ function safeReferrer(){
  try{const url=new URL(document.referrer);return url.origin+url.pathname}catch{return""}
 }
 
-function context(){
+function attribution(){
  const params=new URLSearchParams(location.search);
+ const keys=["utm_source","utm_medium","utm_campaign","utm_content","utm_term"];
+ const saved:Record<string,string>={};
+ try{const old=JSON.parse(sessionStorage.getItem("nayroq_attribution")||"{}");if(old&&typeof old==="object")for(const key of keys)if(typeof old[key]==="string")saved[key]=old[key];}catch{}
+ for(const key of keys){const value=params.get(key);if(value)saved[key]=value.slice(0,160)}
+ try{sessionStorage.setItem("nayroq_attribution",JSON.stringify(saved))}catch{}
+ return saved;
+}
+
+function context(){
+ const params=attribution();
  return{
   visitorId:visitorId(),
   sessionId:sessionId(),
@@ -73,11 +83,11 @@ function context(){
   deviceType:deviceType(),
   browser:browser(),
   os:os(),
-  utmSource:params.get("utm_source"),
-  utmMedium:params.get("utm_medium"),
-  utmCampaign:params.get("utm_campaign"),
-  utmContent:params.get("utm_content"),
-  utmTerm:params.get("utm_term")
+  utmSource:params["utm_source"]||null,
+  utmMedium:params["utm_medium"]||null,
+  utmCampaign:params["utm_campaign"]||null,
+  utmContent:params["utm_content"]||null,
+  utmTerm:params["utm_term"]||null
  };
 }
 
