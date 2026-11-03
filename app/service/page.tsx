@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Headphones, MessageSquare, Phone, RefreshCw } from "lucide-react";
 import AppNav from "@/app/components/AppNav";
 import { LanguageSwitch, useLanguage } from "@/app/i18n";
-import { createClient } from "@/lib/supabase/client";
+import { ownerWorkspace } from "@/lib/service/company";
 import { channelLabel, statusLabel } from "@/lib/ui-labels";
 import styles from "./service.module.css";
 
@@ -16,6 +16,7 @@ export default function ServiceCenter() {
   const { lang, t } = useLanguage();
   const ar = lang === "ar";
   const copy = (en: string, arabic: string) => ar ? arabic : en;
+  const [workspaceRole,setWorkspaceRole]=useState("agent");
   const [rows, setRows] = useState<Conversation[]>([]);
   const [summary, setSummary] = useState<Summary>({ total: 0, handoff: 0, open: 0 });
   const [loading, setLoading] = useState(true);
@@ -30,14 +31,9 @@ export default function ServiceCenter() {
     async function load() {
       setLoading(true); setError(false); setMissingCompany(false);
       try {
-        const s = createClient();
-        const auth = await s.auth.getUser();
-        if (auth.error) throw auth.error;
-        if (!auth.data.user) { location.href = "/login"; return; }
-        const company = await s.from("companies").select("id").eq("owner_id", auth.data.user.id).limit(1).maybeSingle();
-        if (company.error) throw company.error;
-        if (!company.data) { if (active) setMissingCompany(true); return; }
-        const companyId = company.data.id;
+        const {client:s,company,role} = await ownerWorkspace();
+        if(active)setWorkspaceRole(role);
+        const companyId = company.id;
         const [recent, total, handoff, open] = await Promise.all([
           s.from("conversations").select("id,channel,status,human_takeover,created_at,contacts(name,phone)").eq("company_id", companyId).order("created_at", { ascending: false }).limit(100),
           s.from("conversations").select("id", { count: "exact", head: true }).eq("company_id", companyId),
@@ -61,7 +57,7 @@ export default function ServiceCenter() {
     <header><div className="logo"><i>N</i><b>NAYROQ</b></div><LanguageSwitch /></header>
     <section>
       <div className={styles.heading}><div><small>NAYROQ · CUSTOMER OPERATIONS</small><h1>{copy("Customer service center", "مركز خدمة العملاء")}</h1><p>{copy("Your conversations, human handoffs and voice launch readiness in one place.", "محادثات العملاء والتحويل للموظفين وتجهيز المكالمات في مكان واحد.")}</p></div><Headphones size={42} /></div>
-      <nav className={styles.tabs} aria-label={copy("Service tools", "أدوات الخدمة")}><Link href="/service/tickets">{copy("Support tickets", "تذاكر الدعم")}</Link><Link href="/service/configuration">{copy("Assistant & voice setup", "إعداد المساعد والمكالمات")}</Link><Link href="/analytics">{copy("Usage & reports", "الاستهلاك والتقارير")}</Link><Link href="/billing">{copy("Plan & subscription", "الباقة والاشتراك")}</Link></nav><div className={styles.metrics}>{[[copy("All conversations", "كل المحادثات"), summary.total], [copy("Open conversations", "المحادثات المفتوحة"), summary.open], [copy("With your team", "لدى فريقك"), summary.handoff]].map(([label, count]) => <article key={label}><span>{label}</span><strong>{loading || error || missingCompany ? "—" : count}</strong></article>)}</div>
+      <nav className={styles.tabs} aria-label={copy("Service tools", "أدوات الخدمة")}><Link href="/service/team">{copy("Service team", "فريق الخدمة")}</Link><Link href="/service/tickets">{copy("Support tickets", "تذاكر الدعم")}</Link>{workspaceRole!=="agent"&&<Link href="/service/configuration">{copy("Assistant & voice setup", "إعداد المساعد والمكالمات")}</Link>}<Link href="/service/reports">{copy("Usage & reports", "الاستهلاك والتقارير")}</Link>{workspaceRole==="owner"&&<Link href="/billing">{copy("Plan & subscription", "الباقة والاشتراك")}</Link>}</nav><div className={styles.metrics}>{[[copy("All conversations", "كل المحادثات"), summary.total], [copy("Open conversations", "المحادثات المفتوحة"), summary.open], [copy("With your team", "لدى فريقك"), summary.handoff]].map(([label, count]) => <article key={label}><span>{label}</span><strong>{loading || error || missingCompany ? "—" : count}</strong></article>)}</div>
       <div className={styles.columns}><article className={`panel ${styles.queue}`}>
         <div className={styles.toolbar}><h2><MessageSquare size={20} /> {copy("Service queue", "قائمة خدمة العملاء")}</h2><button type="button" disabled={loading} onClick={() => setRevision(n => n + 1)} aria-label={copy("Refresh", "تحديث")}><RefreshCw size={17} /></button></div>
         <div className={styles.filters}><input aria-label={copy("Search customers", "بحث العملاء")} placeholder={copy("Search name or phone", "ابحث بالاسم أو الهاتف")} value={search} onChange={e => setSearch(e.target.value)} /><select aria-label={copy("Conversation filter", "تصفية المحادثات")} value={filter} onChange={e => setFilter(e.target.value)}><option value="all">{copy("All", "الكل")}</option><option value="open">{copy("Open", "مفتوحة")}</option><option value="human">{copy("With team", "لدى الفريق")}</option></select></div>
