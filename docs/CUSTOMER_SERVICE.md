@@ -34,3 +34,11 @@ The existing deployment AI key was enabled for preview use without reading its v
 - Authenticated browser and real AI response checks still require a signed-in review session.
 
 This is a review build, not a completed commercial call center.
+
+## Browser voice review
+
+`/service/voice` adds an owner-only WebRTC voice test. The owner clicks Start and grants microphone access. The API reads the selected owned company, saved settings and up to 20 bounded knowledge records, reserves the existing test quota, and creates a realtime call through `/v1/realtime/calls`. The provider key stays on the server. `OPENAI_REALTIME_MODEL` defaults to `gpt-realtime-2.1`; the configured voice is `marin`.
+
+The page supports automatic greeting, bidirectional audio, assistant captions, microphone mute and stop. Stopping releases tracks, closes the peer/data connection and requests authenticated server hangup. The hangup proof is HMAC-signed, owner-bound, call-bound and expires after one hour. A browser timer ends the test after two minutes; this is not a server-enforced billing cap. Page hide/unmount also attempts cleanup. Failed server hangup on abrupt network loss is not guaranteed to be observable by the client. Audio and captions are not persisted by the application. Audio is sent to OpenAI during the test; provider retention policies still apply.
+
+Validation: TypeScript/build and call-proof tests cover user binding, expiry, tampering, key mismatch and path safety. An actual microphone/audio session still needs a signed-in owner browser, microphone permission and provider model/quota access. This does not activate the Ooredoo phone line.
